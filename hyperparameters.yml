@@ -1,0 +1,9 @@
+epochs: 60
+lr: .1
+momentum: .9
+weight_decay: .0005
+batch_size: 128
+scheduler: ReduceLROnPlateau
+# ReduceLROnPlateau
+scheduler_factor: .1
+scheduler_patience: 5
