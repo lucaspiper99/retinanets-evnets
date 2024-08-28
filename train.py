@@ -174,23 +174,23 @@ def train(
 def init_parser() -> argparse.ArgumentParser:
     # Define args
     parser = argparse.ArgumentParser(
-        description="Training ResNet18 on Tiny ImageNET"
+        description="Training model on Tiny ImageNET"
     )
     parser.add_argument(
         "--hyperparameters",
-        default="hyperparameters.yml",
+        default="./hyperparameters.yml",
         type=str,
         help="Path to yaml file with hyperparameters",
     )
     parser.add_argument(
         "--data_path",
-        default="../evnet/tiny-imagenet-200",
+        default="../tiny-imagenet-200",
         type=str,
         help="Path to the data",
     )
     parser.add_argument(
         "--out_dir",
-        default="../output",
+        default="./output",
         type=str,
         help="Path to the output directory where the model will be saved",
     )
@@ -225,6 +225,7 @@ def init_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--model_arch",
         default='resnet18',
+        choices=['resnet18', 'vgg16'],
         type=str,
         help="EVNet backend model architecture",
     )
@@ -233,7 +234,7 @@ def init_parser() -> argparse.ArgumentParser:
         default="base",
         choices=['base', 'retinanet', 'vonenet', 'evnet'],
         type=str,
-        help="Device to use when training the model",
+        help="Model family",
     )
     parser.add_argument(
         "--device",

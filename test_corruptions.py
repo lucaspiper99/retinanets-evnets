@@ -48,7 +48,6 @@ def test(
 
         return accuracy
 
-
 def init_parser() -> argparse.ArgumentParser:
     # Define args
     parser = argparse.ArgumentParser(
@@ -56,9 +55,14 @@ def init_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--data_path",
-        default="./tiny-imagenet-c",
+        default="../tiny-imagenet-c",
         type=str,
         help="Path to the data",
+    )
+    parser.add_argument(
+        "--use_checkpoint",
+        action="store_true",
+        help="Whether to load the last checkpoint",
     )
     parser.add_argument(
         "--preload",
@@ -78,31 +82,22 @@ def init_parser() -> argparse.ArgumentParser:
         help="Number of batches loaded in advance by each worker.",
     )
     parser.add_argument(
-        "--experiment_name",
-        default="",
-        type=str,
-        help="Name to identify the experiment",
-    )
-    parser.add_argument(
         "--model_arch",
         default='resnet18',
+        choices=['resnet18', 'vgg16'],
         type=str,
         help="EVNet backend model architecture",
     )
     parser.add_argument(
-        "--retinablock",
-        default='',
+        "--model_family",
+        default="base",
+        choices=['base', 'retinanet', 'vonenet', 'evnet'],
         type=str,
-        help="Name of the retinablock version",
-    )
-    parser.add_argument(
-        "--with_voneblock",
-        action="store_true",
-        help="Whether to include a VOneBlock in the model",
+        help="Model family",
     )
     parser.add_argument(
         "--device",
-        default="cuda",
+        default="cuda:0",
         type=str,
         help="Device to use when training the model",
     )
@@ -114,21 +109,11 @@ if __name__ == "__main__":
     parser = init_parser()
     args = parser.parse_args()
 
-    if args.experiment_name == '':
-        if not (args.retinablock or args.with_voneblock): args.experiment_name = 'BASE'
-        if args.retinablock: args.experiment_name += args.retinablock
-        if args.retinablock and args.with_voneblock: args.experiment_name += '+'
-        if args.with_voneblock: args.experiment_name += 'V1'
-        if args.model_arch != 'resnet18': args.experiment_name += '_' + args.model_arch
-
     # Set device
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
 
-    # Set seed
-    set_seed(args.seed)
-
     # Set transforms
-    LastTransform = T.Normalize(mean=[.5]*3, std=[.5]*3) if not args.retinablock else T.Lambda(lambda x: x)  
+    LastTransform = T.Normalize(mean=[.5]*3, std=[.5]*3) if args.model_family in ['base', 'vonenet'] else T.Lambda(lambda x: x)  
     transforms = T.Compose([
         T.ConvertImageDtype(dtype=torch.float),
         T.Resize((64, 64), antialias=True),
@@ -137,7 +122,7 @@ if __name__ == "__main__":
     ])
 
     # Set model
-    directory = os.path.join('/media/lapstorage/output', args.experiment_name)
+    directory = os.path.join('./output', args.model_family)
     subdirs = []
     for subdir in os.listdir(directory):
         subdir_path = os.path.join(directory, subdir)
@@ -161,10 +146,9 @@ if __name__ == "__main__":
 
         # Set model
         model = EVNet(
-            **evnet_params[args.retinablock],
-            with_voneblock=args.with_voneblock,
+            **evnet_params[args.model_family],
             model_arch=args.model_arch, image_size=64,
-            visual_degrees=2, num_classes=200, gabor_seed=seed
+            visual_degrees=2, num_classes=200
         )
         model.to(device)
         checkpoint = torch.load(checkpoint_path, map_location=device)
