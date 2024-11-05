@@ -209,8 +209,8 @@ class ContrastNormalization(nn.Module):
         self.conv.weight.data = filter.expand(self.in_channels, -1, -1).unsqueeze(0) / (torch.sum(filter) * in_channels)
         self.conv.weight.requires_grad = False
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return x / (torch.abs(self.conv(x ** 2)) ** .5 + self.c50)
+    def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return x / (torch.abs(self.conv(y ** 2)) ** .5 + self.c50)
 
 
 class MixedDoG(nn.Module):
