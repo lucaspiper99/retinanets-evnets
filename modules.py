@@ -224,12 +224,13 @@ class MixedDoG(nn.Module):
 
 
 class MixedContrastNormalization(nn.Module):
-    def __init__(self, contrast_norm: nn.Module):
+    def __init__(self, contrast_norm_p: nn.Module, contrast_norm_m: nn.Module):
         super().__init__()
-        self.contrast_norm = contrast_norm
+        self.contrast_norm_p = contrast_norm_p
+        self.contrast_norm_m = contrast_norm_m
 
     def forward(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        return torch.hstack((x[:, :3], self.contrast_norm(x[:, 3:], y)))
+        return torch.hstack((self.contrast_norm_p(x[:, :3], y[:, :3]), self.contrast_norm_m(x[:, 3:], y[:, 3:])))
 
 class RetinaBlock(nn.Module):
     def __init__(
@@ -280,14 +281,24 @@ class RetinaBlock(nn.Module):
             self.kernel_la = kernel_la
             self.light_adapt = LightAdaptation(self.in_channels, self.kernel_la, radius_la)
 
-         # Contrast Normalization
+        # Contrast Normalization
         if contrast_norm:
             self.kernel_cn = kernel_cn
             self.radius_cn = radius_cn
             self.c50 = c50
-            self.contrast_norm = ContrastNormalization(m_channels + p_channels, self.kernel_cn, radius=self.radius_cn, c50=self.c50)
-            if linear_p_cells:
-                self.contrast_norm = MixedContrastNormalization(self.contrast_norm)
+            if not m_channels:
+                    self.contrast_norm = ContrastNormalization(p_channels, self.kernel_p_cell, radius=self.rs_p_cell[0].item(), c50=self.c50)
+            else:
+                if linear_p_cells:
+                    self.contrast_norm = MixedContrastNormalization(
+                        Identity(),
+                        ContrastNormalization(m_channels, self.kernel_m_cell, radius=self.rs_m_cell[0].item(), c50=self.c50)
+                        )
+                else:
+                    self.contrast_norm = MixedContrastNormalization(
+                        ContrastNormalization(p_channels, self.kernel_p_cell, radius=self.rs_p_cell[0].item(), c50=self.c50),
+                        ContrastNormalization(m_channels, self.kernel_m_cell, radius=self.rs_m_cell[0].item(), c50=self.c50)
+                        )
 
         # Nonlinearity
         if relu:
@@ -297,7 +308,7 @@ class RetinaBlock(nn.Module):
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         x = self.light_adapt(x)
         x = self.dog(x)
-        x = self.contrast_norm(x)
+        x = self.contrast_norm(x, x)
         x = self.activation_norm(x)
         x = self.nonlinearity(x)
         return x
