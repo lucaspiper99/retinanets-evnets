@@ -99,21 +99,21 @@ def EVNet(
 
     if model_arch:
         if model_arch == 'resnet18':
-            backend, backend_in_channels = backend.get_resnet18_backend(
+            backend, backend_in_channels = backends.get_resnet_backend(
                 p_channels=p_channels,
                 m_channels=m_channels,
                 num_classes=num_classes,
                 layers=18
                 )
         if model_arch == 'resnet50':
-            backend, backend_in_channels = backend.get_resnet18_backend(
+            backend, backend_in_channels = backends.get_resnet_backend(
                 p_channels=p_channels,
                 m_channels=m_channels,
                 num_classes=num_classes,
                 layers=50
                 )
         if model_arch == 'vgg16':
-            backend, backend_in_channels = backend.get_resnet18_backend(
+            backend, backend_in_channels = backends.get_vgg_backend(
                 p_channels=p_channels,
                 m_channels=m_channels,
                 num_classes=num_classes,
