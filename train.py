@@ -225,7 +225,7 @@ def init_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--model_arch",
         default='resnet18',
-        choices=['resnet18', 'vgg16'],
+        choices=['resnet18', 'resnet50', 'vgg16'],
         type=str,
         help="EVNet backend model architecture",
     )

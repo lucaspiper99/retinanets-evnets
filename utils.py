@@ -242,13 +242,13 @@ def generate_grating(
 
 
 def sample_dist(hist:np.array, bins:int, ns:float, scale:str='linear'):
-    """_summary_
+    """Samples from distributions with different scales.
 
     Args:
         hist (np.array): histogram
         bins (int): number of bins
         ns (float): sample size
-        scale (str, optional): distributino scale. Defaults to 'linear'.
+        scale (str, optional): distribution scale. Defaults to 'linear'.
 
     :returns rand_sample (np.array): 
     """    

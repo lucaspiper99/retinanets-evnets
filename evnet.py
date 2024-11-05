@@ -5,7 +5,7 @@ import torchvision
 import numpy as np
 from modules import RetinaBlock, Bottleneck, VOneBlock, Identity
 from params import get_dog_params, get_div_norm_params, generate_gabor_param
-
+import backends
 
 evnet_params = {
         'base': {
@@ -99,59 +99,26 @@ def EVNet(
 
     if model_arch:
         if model_arch == 'resnet18':
-            backend = torchvision.models.resnet18()
-            backend.fc = nn.Linear(backend.fc.in_features, num_classes)
-            if with_voneblock:
-                backend_in_channels = backend.layer1[0].conv1.in_channels
-                backend = nn.Sequential(
-                        *list(backend.children())[4:-1],  # Remove first block from ResNet-18
-                        nn.Flatten(),
-                        backend.fc
-                        )
-            else:
-                backend.conv1.stride = (1, 1)
-                conv1 = nn.Conv2d(
-                    in_channels=(p_channels + m_channels),
-                    out_channels=backend.conv1.out_channels,
-                    kernel_size=backend.conv1.kernel_size,
-                    stride=backend.conv1.stride,
-                    padding=backend.conv1.padding,
-                    bias=backend.conv1.bias
-                    )
-                weight = torch.zeros_like(conv1.weight.data)
-                weight[:, :3, :, :] = backend.conv1.weight.data
-                nn.init.kaiming_normal_(weight[:, 3:, :, :])
-                conv1.weight.data = weight
-                backend.conv1 = conv1
+            backend, backend_in_channels = backend.get_resnet18_backend(
+                p_channels=p_channels,
+                m_channels=m_channels,
+                num_classes=num_classes,
+                layers=18
+                )
+        if model_arch == 'resnet50':
+            backend, backend_in_channels = backend.get_resnet18_backend(
+                p_channels=p_channels,
+                m_channels=m_channels,
+                num_classes=num_classes,
+                layers=50
+                )
         if model_arch == 'vgg16':
-            backend = torchvision.models.vgg16()
-            backend.classifier[-1] = nn.Linear(backend.classifier[-1].in_features, num_classes)
-            backend.features = nn.Sequential(*list(backend.features[:-1]))
-            backend.classifier[0] = nn.Linear(in_features=25088, out_features=2048, bias=True)
-            backend.classifier[3] = nn.Linear(in_features=2048, out_features=2048, bias=True)
-            backend.classifier[6] = nn.Linear(in_features=2048, out_features=200, bias=True)
-            if with_voneblock:
-                backend_in_channels = backend.features[2].in_channels
-                backend.features = nn.Sequential(
-                        *list(backend.features[2:])
-                        )
-            else:
-                backend.features[0] = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=True)
-
-                conv1 = nn.Conv2d(
-                    in_channels=(p_channels + m_channels),
-                    out_channels=backend.features[0].out_channels,
-                    kernel_size=backend.features[0].kernel_size,
-                    stride=backend.features[0].stride,
-                    padding=backend.features[0].padding,
-                    bias=True
-                    )
-                weight = torch.zeros_like(conv1.weight.data)
-                weight[:, :3, :, :] = backend.features[0].weight.data
-                nn.init.kaiming_normal_(weight[:, 3:, :, :])
-                conv1.bias.data = backend.features[0].bias.data
-                conv1.weight.data = weight
-                backend.features[0] = conv1
+            backend, backend_in_channels = backend.get_resnet18_backend(
+                p_channels=p_channels,
+                m_channels=m_channels,
+                num_classes=num_classes,
+                layers=16
+                )
 
     model_dict = OrderedDict([])
     if with_retinablock:
