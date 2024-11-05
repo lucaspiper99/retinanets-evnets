@@ -67,7 +67,7 @@ def EVNet(
         retinablock = RetinaBlock(
             **dog_params, **div_norm_params,
             in_channels=in_channels, p_channels=p_channels, m_channels=m_channels,
-            linear_p_cells=linear_p_cells, contrast_norm=contrast_norm
+            linear_p_cells=linear_p_cells, contrast_norm=contrast_norm, dog_across_channels=dog_across_channels
             )
 
     if with_voneblock:

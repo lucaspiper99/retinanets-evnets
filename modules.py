@@ -235,12 +235,13 @@ class MixedContrastNormalization(nn.Module):
 class RetinaBlock(nn.Module):
     def __init__(
         self, in_channels, m_channels, p_channels,
+        dog_across_channels,
         rc_p_cell, rs_p_cell, opponency_p_cell, kernel_p_cell,  # P-Cell Difference of Gaussians
         rc_m_cell, rs_m_cell, opponency_m_cell, kernel_m_cell,  # M-Cell Difference of Gaussians
         kernel_la, radius_la,  # Light Adaptation Layer
         kernel_cn, radius_cn, c50,  # Contrast Normalization Layer
         linear_p_cells=False,
-        light_adapt=True, dog=True, contrast_norm=False, relu=False
+        light_adapt=True, dog=True, contrast_norm=False
         ):
         super().__init__()
         self.in_channels = in_channels
@@ -253,9 +254,6 @@ class RetinaBlock(nn.Module):
         self.dog_m_cells = Identity()
         self.dog = Identity()
         self.contrast_norm = Identity()
-        self.nonlinearity = Identity()
-        self.noise = Identity()
-        self.activation_norm = Identity()
 
         # DoG Filter Bank
         if dog:
@@ -263,7 +261,7 @@ class RetinaBlock(nn.Module):
             self.rs_p_cell = rs_p_cell
             self.opponency_p_cell = opponency_p_cell
             self.kernel_p_cell = kernel_p_cell
-            self.dog_p_cells = DoGFB(self.in_channels, self.p_channels, self.kernel_p_cell, across_channels=True)
+            self.dog_p_cells = DoGFB(self.in_channels, self.p_channels, self.kernel_p_cell, across_channels=dog_across_channels)
             self.dog_p_cells.initialize(r_c=self.rc_p_cell, r_s=self.rs_p_cell, opponency=self.opponency_p_cell)
             if m_channels > 0:
                 self.rc_m_cell = rc_m_cell
@@ -299,18 +297,11 @@ class RetinaBlock(nn.Module):
                         ContrastNormalization(p_channels, self.kernel_p_cell, radius=self.rs_p_cell[0].item(), c50=self.c50),
                         ContrastNormalization(m_channels, self.kernel_m_cell, radius=self.rs_m_cell[0].item(), c50=self.c50)
                         )
-
-        # Nonlinearity
-        if relu:
-            #self.nonlinearity = nn.ReLU(inplace=True)
-            self.nonlinearity = nn.ReLU()
         
     def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         x = self.light_adapt(x)
         x = self.dog(x)
         x = self.contrast_norm(x, x)
-        x = self.activation_norm(x)
-        x = self.nonlinearity(x)
         return x
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
