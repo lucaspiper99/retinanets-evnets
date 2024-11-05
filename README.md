@@ -69,7 +69,7 @@ test_corruptions.py [-h] [--data_path DATA_PATH] [--use_checkpoint] [--preload] 
   ```
 
 ## BibTex
-
+```
 @misc{piper2024explicitlymodelingprecorticalvision,
       title={Explicitly Modeling Pre-Cortical Vision with a Neuro-Inspired Front-End Improves CNN Robustness}, 
       author={Lucas Piper and Arlindo L. Oliveira and Tiago Marques},
@@ -79,3 +79,4 @@ test_corruptions.py [-h] [--data_path DATA_PATH] [--use_checkpoint] [--preload] 
       primaryClass={cs.CV},
       url={https://arxiv.org/abs/2409.16838}, 
 }
+```
