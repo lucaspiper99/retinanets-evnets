@@ -31,6 +31,7 @@ def get_resnet_backend(
                 backend.fc
                 )
     else:
+        backend_in_channels = 3
         if tiny: backend.conv1.stride = (1, 1)
         conv1 = nn.Conv2d(
             in_channels=(p_channels + m_channels),
@@ -81,6 +82,7 @@ def get_vgg_backend(
                 *list(backend.features[2:])
                 )
     else:
+        backend_in_channels = 3
         backend.features[0] = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=True)
         conv1 = nn.Conv2d(
             in_channels=(p_channels + m_channels),
