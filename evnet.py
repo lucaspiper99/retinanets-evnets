@@ -34,7 +34,7 @@ evnet_params = {
             'p_channels': 3,
             'm_channels': 1,
             'linear_p_cells': True,
-            'with_voneblock': False
+            'with_voneblock': True
         }
     }
 

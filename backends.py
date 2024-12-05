@@ -13,8 +13,8 @@ def get_resnet_backend(
     """Returns ResNet18 or ResNet50 backend.
 
     :param num_classes (int): number of classes in the classifier
-    :param p_channels (float, optional): number of Midget/P cell channels
-    :param m_channels (float, optional): number of Parasol/M cell channels
+    :param p_channels (int, optional): number of Midget/P cell channels
+    :param m_channels (int, optional): number of Parasol/M cell channels
     :param layers (int, optional): number of architecture layers
     :param with_voneblock (bool, optional): whether to remove the first block of the backend
     :param tiny (bool, optional): whether to employ Tiny ImageNet adaptation (64px/2deg input)
@@ -24,6 +24,7 @@ def get_resnet_backend(
     backend = torchvision.models.resnet18() if layers == 18 else torchvision.models.resnet50()
     backend.fc = nn.Linear(backend.fc.in_features, num_classes)
     if with_voneblock:
+        # When using the VOneBlock, in channels are defined in the bottleneck
         backend_in_channels = backend.layer1[0].conv1.in_channels
         backend = nn.Sequential(
                 *list(backend.children())[4:-1],  # Remove first block from ResNet-18
@@ -42,8 +43,9 @@ def get_resnet_backend(
             bias=backend.conv1.bias
             )
         weight = torch.zeros_like(conv1.weight.data)
-        weight[:, :3, :, :] = backend.conv1.weight.data
-        nn.init.kaiming_normal_(weight[:, 3:, :, :])
+        weight[:, :(p_channels+m_channels), :, :] = backend.conv1.weight.data[:, :(p_channels+m_channels), :, :]
+        if weight.size(1) > backend.conv1.weight.data.size(1):
+            nn.init.kaiming_normal_(weight[:, (p_channels+m_channels):, :, :])
         conv1.weight.data = weight
         backend.conv1 = conv1
     
@@ -93,8 +95,9 @@ def get_vgg_backend(
             bias=True
             )
         weight = torch.zeros_like(conv1.weight.data)
-        weight[:, :3, :, :] = backend.features[0].weight.data
-        nn.init.kaiming_normal_(weight[:, 3:, :, :])
+        weight[:, :(p_channels+m_channels), :, :] = backend.features[0].weight.data[:, :(p_channels+m_channels), :, :]
+        if weight.size(1) > backend.conv1.weight.data.size(1):
+            nn.init.kaiming_normal_(weight[:, (p_channels+m_channels):, :, :])
         conv1.bias.data = backend.features[0].bias.data
         conv1.weight.data = weight
         backend.features[0] = conv1

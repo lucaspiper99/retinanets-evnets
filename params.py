@@ -32,7 +32,7 @@ M_cell_params = {
 
 
 def get_dog_params(
-    features:int, sampling:Literal['median', 'binning', 'uniform', 'lognormal'],
+    features:int, sampling:Literal['median', 'binning', 'uniform', 'lognormal']='median',
     colors:list[Literal['r/g', 'g/r', 'b/y', 'w/b']]=['r/g', 'g/r', 'b/y'],
     polarity:list[Literal[0, 1]]=None,
     cell_type:Literal['p', 'm']='p', image_size:int=image_size, visual_degrees:int=visual_degrees
