@@ -33,9 +33,10 @@ def get_resnet_backend(
                 )
     else:
         backend_in_channels = 3
+        in_channels = p_channels + m_channels
         if tiny: backend.conv1.stride = (1, 1)
         conv1 = nn.Conv2d(
-            in_channels=(p_channels + m_channels),
+            in_channels=in_channels,
             out_channels=backend.conv1.out_channels,
             kernel_size=backend.conv1.kernel_size,
             stride=backend.conv1.stride,
@@ -43,9 +44,10 @@ def get_resnet_backend(
             bias=backend.conv1.bias
             )
         weight = torch.zeros_like(conv1.weight.data)
-        weight[:, :(p_channels+m_channels), :, :] = backend.conv1.weight.data[:, :(p_channels+m_channels), :, :]
+        weight[:, :min(in_channels, backend_in_channels), :, :] =\
+            backend.conv1.weight.data[:, :min(in_channels, backend_in_channels), :, :]
         if weight.size(1) > backend.conv1.weight.data.size(1):
-            nn.init.kaiming_normal_(weight[:, (p_channels+m_channels):, :, :])
+            nn.init.kaiming_normal_(weight[:, in_channels:, :, :], mode="fan_out", nonlinearity="relu")
         conv1.weight.data = weight
         backend.conv1 = conv1
     
@@ -85,9 +87,10 @@ def get_vgg_backend(
                 )
     else:
         backend_in_channels = 3
+        in_channels = p_channels + m_channels
         backend.features[0] = nn.Conv2d(3, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=True)
         conv1 = nn.Conv2d(
-            in_channels=(p_channels + m_channels),
+            in_channels=in_channels,
             out_channels=backend.features[0].out_channels,
             kernel_size=backend.features[0].kernel_size,
             stride=backend.features[0].stride,
@@ -95,9 +98,10 @@ def get_vgg_backend(
             bias=True
             )
         weight = torch.zeros_like(conv1.weight.data)
-        weight[:, :(p_channels+m_channels), :, :] = backend.features[0].weight.data[:, :(p_channels+m_channels), :, :]
+        weight[:, :min(in_channels, backend_in_channels), :, :] =\
+            backend.conv1.weight.data[:, :min(in_channels, backend_in_channels), :, :]
         if weight.size(1) > backend.conv1.weight.data.size(1):
-            nn.init.kaiming_normal_(weight[:, (p_channels+m_channels):, :, :])
+            nn.init.kaiming_normal_(weight[:, in_channels:, :, :], mode="fan_out", nonlinearity="relu")
         conv1.bias.data = backend.features[0].bias.data
         conv1.weight.data = weight
         backend.features[0] = conv1

@@ -5,7 +5,7 @@ import torchvision
 import numpy as np
 from modules import RetinaBlock, Bottleneck, VOneBlock, Identity
 from params import get_dog_params, get_div_norm_params, generate_gabor_param
-import backends
+from backends import get_resnet_backend, get_vgg_backend
 
 evnet_params = {
         'base': {
@@ -99,24 +99,30 @@ def EVNet(
 
     if model_arch:
         if model_arch == 'resnet18':
-            backend, backend_in_channels = backends.get_resnet_backend(
+            backend, backend_in_channels = get_resnet_backend(
                 p_channels=p_channels,
                 m_channels=m_channels,
                 num_classes=num_classes,
+                with_voneblock=with_voneblock,
+                tiny=(image_size==64),
                 layers=18
                 )
         if model_arch == 'resnet50':
-            backend, backend_in_channels = backends.get_resnet_backend(
+            backend, backend_in_channels = get_resnet_backend(
                 p_channels=p_channels,
                 m_channels=m_channels,
                 num_classes=num_classes,
+                with_voneblock=with_voneblock,
+                tiny=(image_size==64),
                 layers=50
                 )
         if model_arch == 'vgg16':
-            backend, backend_in_channels = backends.get_vgg_backend(
+            backend, backend_in_channels = get_vgg_backend(
                 p_channels=p_channels,
                 m_channels=m_channels,
                 num_classes=num_classes,
+                with_voneblock=with_voneblock,
+                tiny=(image_size==64),
                 layers=16
                 )
 
